@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>JSON Viewer</title>
+</head>
+<body>
+<div style="display: flex">
+    <div>
+        <span style="display: flex">original json</span>
+        <textarea id="json" rows="30" cols="60"></textarea>
+    </div>
+    <div>
+        <span style="display: flex">beautifier json</span>
+        <textarea id="result" rows="30" cols="60"></textarea>
+    </div>
+</div>
+<div>
+    <button id="copyUrl">Copy URL</button>
+    <input id="space" type="number" value="4" min="0" max="10">
+    <label for="space">Spaces</label>
+</div>
+<script>
+    // JSONを整形して返す関数
+    function renderJSON(json, spaceNum) {
+        try {
+            var obj = JSON.parse(json);
+            var result = JSON.stringify(obj, null, spaceNum);
+            return result;
+        } catch (e) {
+            return 'JSON Parse Error:\n' + e.message;
+        }
+    }
+
+    // 入力JSONに応じたURLを生成する関数
+    function generateURL(json) {
+        var url = window.location.href.split('?')[0];
+        var encodedJSON = encodeURIComponent(json);
+        var queryString = '?json=' + encodedJSON;
+
+        return url + queryString;
+    }
+
+    // ページの読み込み完了時に実行される関数
+    window.onload = function() {
+        var jsonTextarea = document.getElementById('json');
+        var resultTextarea = document.getElementById('result');
+        var copyUrlButton = document.getElementById('copyUrl');
+        var spaceInput = document.getElementById('space');
+
+        // URLのクエリストリングを解析して入力JSONを取得する
+        var queryString = window.location.search;
+        if (queryString) {
+            var params = new URLSearchParams(queryString);
+            var json = params.get('json');
+
+            if (json) {
+                jsonTextarea.value = json;
+                resultTextarea.value = renderJSON(json, Number(spaceInput.value));
+            }
+        }
+
+        // オリジナルのJSONが変更されたときに 整形されたJSONを更新する
+        jsonTextarea.addEventListener('input', function() {
+            var json = jsonTextarea.value;
+            var result = renderJSON(json, Number(spaceInput.value));
+            resultTextarea.value = result;
+        });
+
+        // Copy URL button をクリックされた場合に URL を生成してコピーする
+        copyUrlButton.addEventListener('click', function() {
+            var json = jsonTextarea.value;
+            var url = generateURL(json);
+
+            navigator.clipboard.writeText(url)
+                .then(function() {
+                    console.log('Copied URL to clipboard:', url);
+                })
+                .catch(function(err) {
+                    console.error('Failed to copy URL to clipboard:', err);
+                });
+        });
+    };
+</script>
+</body>
+</html>
